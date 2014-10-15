@@ -96,6 +96,8 @@ The program has a usage message, so let me just show a typical usage example:
 
     ./zeroes.py --out picture.png --size 1000 --radius 200 --degrees 1-14 --coeffs 1,-1 --xmin -2 --xmax 2 --ymin -2 --ymax 2 --colors 0,0,255:0,128,255:128,255,255
 
-    ./zeroes.py --out picture.png --size 1000 --radius 200 --degrees 1-8 --coeffs 1,2,0,-1 --xmin -2 --xmax 2 --ymin -2 --ymax 2 --colors 255,0,0:255,255,0
+And another one:
+
+    ./zeroes.py --out picture.png --size 1000 --radius 100 --degrees 1-10 --coeffs 0,1,2 --xmin -3 --xmax 2 --ymin -2 --ymax 2 --colors 255,255,0:255,128,0:0,255,255
 
 The program `animate.py` uses `zeroes.py` to generate a sequence of images which can then be composed into a movie. The movie shows what happens when we smoothly change the coefficients.
