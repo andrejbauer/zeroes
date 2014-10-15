@@ -19,7 +19,7 @@ Here is a short explanation of the relevant files:
 
 The TEDx movies generated with these programs can be seen in my [Vimeo "Zeroes" album](https://vimeo.com/album/3086303), as well as some additional ones.
 
-## Compilation and installation
+## Compilation
 
 ### Prerequisites
 
