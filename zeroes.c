@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <math.h>
 #include <gsl/gsl_poly.h>
+#include <gsl/gsl_errno.h>
+#include <time.h>
 
 int main (int argc, char* argv[])
 {
   /* Parse the command line arguments. */
-  const char* usage = "Usage: ./zeroes <xmin> <xmax> <ymin> <ymax> <xres> <coeff> ... <coeff> - <degree> ... <degree>\nExample: ./zeroes -2 2 -1.75 1.75 2000 1 -1 - 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 > picture.ppm\n";
+  const char* usage = "Usage: zeroes <xmin> <xmax> <ymin> <ymax> <xres> <coeff> ... <coeff> - <degree> ... <degree>\n";
 
   if (argc < 8) {
     fprintf (stderr, "%s", usage);
@@ -46,12 +48,19 @@ int main (int argc, char* argv[])
   const unsigned int count_bound = 0xffffffff;
   unsigned int max_count = 0 ;
 
+  /* Turn off the GSL error handler that aborts on error (some polynomials have tricky zeroes) */
+  gsl_set_error_handler_off ();
+
   /* We're going to skip zeroes whose imaginary part is almost zero. */
   const double epsilon = 1.0e-20 ;
+
+  time_t start = time(NULL);
 
   /* Run through degrees and compute the zeroes for each one. */
   for (int di = 0; di < di_max; di++) {
     const int d = degree[di]; /* The degree we're working on. */
+    time_t now = time(NULL);
+    fprintf (stderr, "Degree %d (%.2lf seconds)\n", d, difftime(now, start));
     /* Initialize the polynomial. */
     double poly[d+1];
     for (int j = 0; j <= d; j++) { poly[j] = coeff[0]; } 
@@ -65,17 +74,20 @@ int main (int argc, char* argv[])
       /* Compute the zeroes if head coefficient is non-zero. */
       if (poly[d] > epsilon || poly[d] < -epsilon) {
         double z[2*d]; /* the zeroes are stored here */
-        gsl_poly_complex_solve (poly, d+1, w, z);
-        /* Draw zeroes, skipping the real ones that are away from the origin */
-        for (int i=0; i < d; i++) {
-          if (-epsilon < z[2*i+1] && z[2*i+1] < epsilon && (z[2*i] < -0.5 || z[2*i] > 0.5)) {
-            continue;
-          }
-          int x = (int)((xres * (z[2*i] - xmin)) / (xmax - xmin));
-          int y = yres - (int)((yres * (z[2*i+1] - ymin)) / (ymax - ymin));
-          if (0 <= x && x < xres && 0 <= y && y < yres && image[xres * y + x] < count_bound) {
-            int c = ++image[xres * y + x];
-            if (max_count < c) { max_count = c; }
+        int status = gsl_poly_complex_solve (poly, d+1, w, z);
+        /* Only use zeroes if GSL reported success */
+        if (status == 0) {
+          /* Draw zeroes, skipping the real ones that are away from the origin */
+          for (int i=0; i < d; i++) {
+            if (-epsilon < z[2*i+1] && z[2*i+1] < epsilon && (z[2*i] < -0.5 || z[2*i] > 0.5)) {
+              continue;
+            }
+            int x = (int)((xres * (z[2*i] - xmin)) / (xmax - xmin));
+            int y = yres - (int)((yres * (z[2*i+1] - ymin)) / (ymax - ymin));
+            if (0 <= x && x < xres && 0 <= y && y < yres && image[xres * y + x] < count_bound) {
+              int c = ++image[xres * y + x];
+              if (max_count < c) { max_count = c; }
+            }
           }
         }
       }
