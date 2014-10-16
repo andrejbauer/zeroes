@@ -13,6 +13,7 @@ Here is a short explanation of the relevant files:
 
 * `zeroes.c`: a C program for computing & drawing the zeroes of polynomials
 * `Makefile`: a make file to compile `zeroes.c`
+* `movie.py`: a Python helper for creating an animation from the image computed by `zeroes.c`
 * `zeroes.py`: Python program to draw the zeroes as disks
 * `animate.py`: example of how to make an animation using `zeroes.py`
 * `examples`: examples of images created by the above programs
@@ -85,7 +86,7 @@ quality you will need some competence with ImageMagick.
 
 If you are planning to generate movies, you can generate a really big picture and then cut
 out movie frames from it using ImageMagick. Then you can combine the frames into a movie
-with `ffmpeg`.
+with `ffmpeg`. The `movie.py` program helps you generate a movie.
 
 ### The Python program
 
