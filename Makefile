@@ -1,6 +1,6 @@
 # Configure the libraries to be used
 # This seems to work on OSX
-LIBS=-lgsl
+LIBS=-lgsl -lcblas
 # And this works on Linux
 # LIBS=-lgsl -L/usr/lib/openblas-base/ -lopenblas
 
