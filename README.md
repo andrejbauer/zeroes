@@ -1,7 +1,7 @@
 # Zeroes of polynomials
 
 Here is the code used to create the images from my [TEDx
-talk](http://tedxul.si/speakers/andrej-bauer/), with extras. It is all released under
+talk](http://tedxul.si/speakers/andrej-bauer/) (here is the [video](https://youtu.be/XtaRkV7PWTA?si=9NPvH8EkOiftXmes) with English subtitles), with extras. It is all released under
 the permissive [MIT license](http://opensource.org/licenses/MIT), so please have fun with
 it and send me improvements (as a pull requests, please).
 
@@ -18,8 +18,7 @@ Here is a short explanation of the relevant files:
 * `animate.py`: example of how to make an animation using `zeroes.py`
 * `examples`: examples of images created by the above programs
 
-The TEDx movies generated with these programs can be seen in my [Vimeo "Zeroes" album](https://vimeo.com/album/3086303), and you can read about the whole thing at
-my blog post [TEDx "Zeroes"](http://math.andrej.com/2014/10/16/tedx-zeroes/).
+You can read about the whole thing at my blog post [TEDx "Zeroes"](http://math.andrej.com/2014/10/16/tedx-zeroes/).
 
 ## Compilation
 
