@@ -2,41 +2,134 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include <unistd.h> // for sysconf
+#include <unistd.h>
+#include <errno.h>
 #include "compute.h"
 #include "image.h"
 
+typedef struct {
+    double xmin, xmax, ymin, ymax;
+    int xres;
+    double *coeffs;
+    int coeff_count;
+    int *degrees;
+    int degree_count;
+} input_params_t;
+
+int read_input_file(const char *filename, input_params_t *params) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        perror("Error opening input file");
+        return -1;
+    }
+
+    char line[256];
+    int got_xmin = 0, got_xmax = 0, got_ymin = 0, got_ymax = 0, got_xres = 0;
+
+    while (fgets(line, sizeof(line), file)) {
+        if (line[0] == '\n' || line[0] == '\r') {
+            continue; // Ignore empty lines
+        }
+
+        char key[256];
+        char value[256];
+        if (sscanf(line, "%s %[^\n]", key, value) != 2) {  // Using %[^\n] to capture the rest of the line as value
+            fprintf(stderr, "Error parsing line: %s\n", line);
+            fclose(file);
+            return -1;
+        }
+
+        if (strcmp(key, "xmin") == 0) {
+            params->xmin = atof(value);
+            got_xmin = 1;
+        } else if (strcmp(key, "xmax") == 0) {
+            params->xmax = atof(value);
+            got_xmax = 1;
+        } else if (strcmp(key, "ymin") == 0) {
+            params->ymin = atof(value);
+            got_ymin = 1;
+        } else if (strcmp(key, "ymax") == 0) {
+            params->ymax = atof(value);
+            got_ymax = 1;
+        } else if (strcmp(key, "xres") == 0) {
+            params->xres = atoi(value);
+            got_xres = 1;
+        } else if (strcmp(key, "coeffs") == 0) {
+            char *token = strtok(value, " ");
+            params->coeff_count = 0;
+            while (token) {
+                params->coeffs = realloc(params->coeffs, (params->coeff_count + 1) * sizeof(double));
+                if (!params->coeffs) {
+                    perror("Error reallocating memory for coefficients");
+                    fclose(file);
+                    return -1;
+                }
+                params->coeffs[params->coeff_count++] = atof(token);
+                token = strtok(NULL, " ");
+            }
+        } else if (strcmp(key, "degrees") == 0) {
+            char *token = strtok(value, " ");
+            params->degree_count = 0;
+            while (token) {
+                params->degrees = realloc(params->degrees, (params->degree_count + 1) * sizeof(int));
+                if (!params->degrees) {
+                    perror("Error reallocating memory for degrees");
+                    fclose(file);
+                    return -1;
+                }
+                params->degrees[params->degree_count++] = atoi(token);
+                token = strtok(NULL, " ");
+            }
+        } else {
+            fprintf(stderr, "Unknown key: %s\n", key);
+            fclose(file);
+            return -1;
+        }
+    }
+
+    if (!got_xmin || !got_xmax || !got_ymin || !got_ymax || !got_xres || params->coeff_count == 0 || params->degree_count == 0) {
+        fprintf(stderr, "Error: Missing required input parameters.\n");
+        fclose(file);
+        return -1;
+    }
+
+    fclose(file);
+
+    // Print parsed parameters for debugging
+    printf("Parsed parameters:\n");
+    printf("xmin = %f\n", params->xmin);
+    printf("xmax = %f\n", params->xmax);
+    printf("ymin = %f\n", params->ymin);
+    printf("ymax = %f\n", params->ymax);
+    printf("xres = %d\n", params->xres);
+    printf("coeffs = ");
+    for (int i = 0; i < params->coeff_count; i++) {
+        printf("%f ", params->coeffs[i]);
+    }
+    printf("\ndegrees = ");
+    for (int i = 0; i < params->degree_count; i++) {
+        printf("%d ", params->degrees[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
+
 int main(int argc, char* argv[]) {
-    const char* usage = "Usage: zeros <xmin> <xmax> <ymin> <ymax> <xres> <coeff> ... <coeff> - <degree> ... <degree>\n";
-
-    if (argc < 8) {
-        fprintf(stderr, "%s", usage);
-        exit(EXIT_FAILURE);
+    if (argc < 3) {
+        fprintf(stderr, "Usage: %s <input_file> <output_file>\n", argv[0]);
+        return EXIT_FAILURE;
     }
 
-    const double xmin = atof(argv[1]);
-    const double xmax = atof(argv[2]);
-    const double ymin = atof(argv[3]);
-    const double ymax = atof(argv[4]);
-    const int xres = atoi(argv[5]);
-    const int yres = (int)((xres * (ymax-ymin)) / (xmax-xmin));
+    const char *input_file = argv[1];
+    const char *output_file = argv[2];
 
-    int ci_max = 0;
-    while (6 + ci_max < argc && (argv[6+ci_max][0] != '-' || argv[6+ci_max][1] != 0)) { ci_max++; }
-    if (ci_max == 0) {
-        fprintf(stderr, "%s\nError: specify at least one coefficient.", usage);
-        exit(EXIT_FAILURE);
+    input_params_t params = {0};
+    if (read_input_file(input_file, &params) != 0) {
+        return EXIT_FAILURE;
     }
-    double coeff[ci_max];
-    for (int ci = 0; ci < ci_max; ci++) { coeff[ci] = atof(argv[6+ci]); }
 
-    const int di_max = argc - 7 - ci_max;
-    if (di_max <= 0) {
-        fprintf(stderr, "%s\nError: specify at least one degree.", usage);
-        exit(EXIT_FAILURE);
-    }
-    int degree[di_max];
-    for (int di = 0; di < di_max; di++) { degree[di] = atoi(argv[7+ci_max+di]); }
+    const int yres = (int)((params.xres * (params.ymax - params.ymin)) / (params.xmax - params.xmin));
 
     unsigned int max_count = 0;
     pthread_mutex_t max_count_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -47,25 +140,29 @@ int main(int argc, char* argv[]) {
     pthread_t threads[num_threads];
     thread_data_t thread_data[num_threads];
 
-    unsigned int *shared_image = (unsigned int *)calloc(sizeof(unsigned int), yres * xres);
+    unsigned int *shared_image = (unsigned int *)calloc(sizeof(unsigned int), yres * params.xres);
+    if (!shared_image) {
+        perror("Error allocating memory for image");
+        return EXIT_FAILURE;
+    }
 
     // Create work queue
     work_queue queue = { NULL, PTHREAD_MUTEX_INITIALIZER };
     int fixed_coeff[NUM_FIXED_COEFF];
-    for (int di = 0; di < di_max; di++) {
-        recursive_enqueue(&queue, fixed_coeff, 0, ci_max, degree[di]);
+    for (int di = 0; di < params.degree_count; di++) {
+        recursive_enqueue(&queue, fixed_coeff, 0, params.coeff_count, params.degrees[di]);
     }
 
     for (int t = 0; t < num_threads; t++) {
         thread_data[t].thread_id = t;
-        thread_data[t].coeff = coeff;
-        thread_data[t].ci_max = ci_max;
+        thread_data[t].coeff = params.coeffs;
+        thread_data[t].ci_max = params.coeff_count;
         thread_data[t].queue = &queue;
-        thread_data[t].xmin = xmin;
-        thread_data[t].xmax = xmax;
-        thread_data[t].ymin = ymin;
-        thread_data[t].ymax = ymax;
-        thread_data[t].xres = xres;
+        thread_data[t].xmin = params.xmin;
+        thread_data[t].xmax = params.xmax;
+        thread_data[t].ymin = params.ymin;
+        thread_data[t].ymax = params.ymax;
+        thread_data[t].xres = params.xres;
         thread_data[t].yres = yres;
         thread_data[t].shared_image = shared_image;
         thread_data[t].image_mutex = &image_mutex;
@@ -79,8 +176,10 @@ int main(int argc, char* argv[]) {
         pthread_join(threads[t], NULL);
     }
 
-    save_tiff_image("output.tiff", shared_image, xres, yres);
+    save_tiff_image(output_file, shared_image, params.xres, yres);
 
     free(shared_image);
+    free(params.coeffs);
+    free(params.degrees);
     return 0;
 }

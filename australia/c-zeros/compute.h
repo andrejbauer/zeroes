@@ -1,6 +1,8 @@
 #ifndef COMPUTE_H
 #define COMPUTE_H
 
+#include <pthread.h>
+
 #define NUM_FIXED_COEFF 5
 
 typedef struct work_item {

@@ -74,11 +74,8 @@ void *compute_zeroes(void *thread_data) {
                 double z[2*d];
                 int status = gsl_poly_complex_solve(poly, d+1, w, z);
                 if (status == 0) {
-                    /* pthread_mutex_lock(data->image_mutex); */
+                    pthread_mutex_lock(data->image_mutex);
                     for (int i = 0; i < d; i++) {
-                        if (-epsilon < z[2*i+1] && z[2*i+1] < epsilon && (z[2*i] < -0.5 || z[2*i] > 0.5)) {
-                            continue;
-                        }
                         int x = (int)((data->xres * (z[2*i] - data->xmin)) / (data->xmax - data->xmin));
                         int y = data->yres - (int)((data->yres * (z[2*i+1] - data->ymin)) / (data->ymax - data->ymin));
                         if (0 <= x && x < data->xres && 0 <= y && y < data->yres) {
@@ -86,18 +83,13 @@ void *compute_zeroes(void *thread_data) {
                             if (max_count_local < c) { max_count_local = c; }
                         }
                     }
-                    /* pthread_mutex_unlock(data->image_mutex); */
+                    pthread_mutex_unlock(data->image_mutex);
                 }
             }
             for (j = NUM_FIXED_COEFF; j <= d && counter[j] == data->ci_max-1; j++) { counter[j] = 0; poly[j] = data->coeff[0]; }
             if (j <= d) { counter[j]++; poly[j] = data->coeff[counter[j]]; }
         } while (j <= d);
         gsl_poly_complex_workspace_free(w);
-        /* fprintf(stderr, "Thread %d: Completed degree %d with fixed coeff indices", data->thread_id, d); */
-        /* for (int i = 0; i < NUM_FIXED_COEFF; i++) { */
-        /*     fprintf(stderr, " %d", task->fixed_coeff[i]); */
-        /* } */
-        /* fprintf(stderr, "\n"); */
         free(poly);
         free(counter);
         free(task);
