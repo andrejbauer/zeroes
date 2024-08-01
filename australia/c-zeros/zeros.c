@@ -3,14 +3,15 @@
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <errno.h>
+#include <gsl/gsl_complex.h>
+#include <gsl/gsl_complex_math.h>
 #include "compute.h"
 #include "image.h"
 
 typedef struct {
     double xmin, xmax, ymin, ymax;
     int xres;
-    double *coeffs;
+    gsl_complex *coeffs;
     int coeff_count;
     int *degrees;
     int degree_count;
@@ -58,13 +59,16 @@ int read_input_file(const char *filename, input_params_t *params) {
             char *token = strtok(value, " ");
             params->coeff_count = 0;
             while (token) {
-                params->coeffs = realloc(params->coeffs, (params->coeff_count + 1) * sizeof(double));
+                params->coeffs = realloc(params->coeffs, (params->coeff_count + 1) * sizeof(gsl_complex));
                 if (!params->coeffs) {
                     perror("Error reallocating memory for coefficients");
                     fclose(file);
                     return -1;
                 }
-                params->coeffs[params->coeff_count++] = atof(token);
+                double real, imag;
+                sscanf(token, "%lf,%lf", &real, &imag);
+                params->coeffs[params->coeff_count] = gsl_complex_rect(real, imag);
+                params->coeff_count++;
                 token = strtok(NULL, " ");
             }
         } else if (strcmp(key, "degrees") == 0) {
@@ -104,7 +108,7 @@ int read_input_file(const char *filename, input_params_t *params) {
     printf("xres = %d\n", params->xres);
     printf("coeffs = ");
     for (int i = 0; i < params->coeff_count; i++) {
-        printf("%f ", params->coeffs[i]);
+        printf("(%f,%f) ", GSL_REAL(params->coeffs[i]), GSL_IMAG(params->coeffs[i]));
     }
     printf("\ndegrees = ");
     for (int i = 0; i < params->degree_count; i++) {
@@ -134,6 +138,12 @@ int main(int argc, char* argv[]) {
     unsigned int max_count = 0;
     pthread_mutex_t max_count_mutex = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t image_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+    // Reset global progress counters
+    extern unsigned int completed_tasks;
+    extern unsigned int total_tasks;
+    completed_tasks = 0;
+    total_tasks = 0;
 
     int num_threads = sysconf(_SC_NPROCESSORS_ONLN) - 1;
     fprintf(stderr, "Using %d threads\n", num_threads);
