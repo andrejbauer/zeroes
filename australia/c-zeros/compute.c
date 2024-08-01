@@ -6,6 +6,20 @@
 #include <pthread.h>
 #include "compute.h"
 
+static unsigned int completed_tasks = 0;
+static unsigned int total_tasks = 0;
+pthread_mutex_t progress_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+void print_progress() {
+    pthread_mutex_lock(&progress_mutex);
+    unsigned int local_completed_tasks = completed_tasks;
+    pthread_mutex_unlock(&progress_mutex);
+
+    double progress = (double)local_completed_tasks / total_tasks * 100;
+    fprintf(stderr, "Progress: %.0f%%\r", progress);
+    fflush(stderr);
+}
+
 void enqueue(work_queue *queue, int fixed_coeff[NUM_FIXED_COEFF], int degree) {
     work_item *item = (work_item *)malloc(sizeof(work_item));
     for (int i = 0; i < NUM_FIXED_COEFF; i++) {
@@ -17,6 +31,7 @@ void enqueue(work_queue *queue, int fixed_coeff[NUM_FIXED_COEFF], int degree) {
     pthread_mutex_lock(&queue->mutex);
     item->next = queue->head;
     queue->head = item;
+    total_tasks++;  // Increment the total number of tasks
     pthread_mutex_unlock(&queue->mutex);
 }
 
@@ -74,22 +89,33 @@ void *compute_zeroes(void *thread_data) {
                 double z[2*d];
                 int status = gsl_poly_complex_solve(poly, d+1, w, z);
                 if (status == 0) {
-                    pthread_mutex_lock(data->image_mutex);
                     for (int i = 0; i < d; i++) {
+                        if (-epsilon < z[2*i+1] && z[2*i+1] < epsilon && (z[2*i] < -0.5 || z[2*i] > 0.5)) {
+                            continue;
+                        }
                         int x = (int)((data->xres * (z[2*i] - data->xmin)) / (data->xmax - data->xmin));
                         int y = data->yres - (int)((data->yres * (z[2*i+1] - data->ymin)) / (data->ymax - data->ymin));
                         if (0 <= x && x < data->xres && 0 <= y && y < data->yres) {
+                            pthread_mutex_lock(data->image_mutex);
                             unsigned int c = ++data->shared_image[data->xres * y + x];
+                            pthread_mutex_unlock(data->image_mutex);
                             if (max_count_local < c) { max_count_local = c; }
                         }
                     }
-                    pthread_mutex_unlock(data->image_mutex);
                 }
             }
             for (j = NUM_FIXED_COEFF; j <= d && counter[j] == data->ci_max-1; j++) { counter[j] = 0; poly[j] = data->coeff[0]; }
             if (j <= d) { counter[j]++; poly[j] = data->coeff[counter[j]]; }
         } while (j <= d);
         gsl_poly_complex_workspace_free(w);
+
+        pthread_mutex_lock(&progress_mutex);
+        completed_tasks++;
+        pthread_mutex_unlock(&progress_mutex);
+        if (completed_tasks % 20 == 0) { // Adjust this value as needed to control frequency of progress updates
+            print_progress();
+        }
+
         free(poly);
         free(counter);
         free(task);

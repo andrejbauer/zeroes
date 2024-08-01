@@ -3,7 +3,7 @@
 
 #include <pthread.h>
 
-#define NUM_FIXED_COEFF 5
+#define NUM_FIXED_COEFF 8
 
 typedef struct work_item {
     int fixed_coeff[NUM_FIXED_COEFF]; // Indices of the fixed coefficients for the combination
