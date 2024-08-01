@@ -2,7 +2,6 @@
 #define COMPUTE_H
 
 #include <pthread.h>
-#include <gsl/gsl_complex.h>  // Add GSL complex header
 
 #define NUM_FIXED_COEFF 8
 
@@ -14,12 +13,12 @@ typedef struct work_item {
 
 typedef struct {
     work_item *head;
-    pthread_mutex_t mutex;  // Use pthread_mutex_t here
+    pthread_mutex_t mutex;
 } work_queue;
 
 typedef struct {
     int thread_id;
-    const gsl_complex *coeff;  // Use gsl_complex instead of double
+    const double *coeff;
     int ci_max;
     work_queue *queue;
     double xmin, xmax, ymin, ymax;
@@ -34,9 +33,5 @@ void enqueue(work_queue *queue, int fixed_coeff[NUM_FIXED_COEFF], int degree);
 work_item* dequeue(work_queue *queue);
 void recursive_enqueue(work_queue *queue, int *fixed_coeff, int depth, int ci_max, int degree);
 void *compute_zeroes(void *thread_data);
-
-// Add extern declarations for progress tracking variables
-extern unsigned int completed_tasks;
-extern unsigned int total_tasks;
 
 #endif // COMPUTE_H
