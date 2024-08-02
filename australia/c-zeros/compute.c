@@ -20,8 +20,8 @@ void print_progress() {
     pthread_mutex_unlock(&progress_mutex);
 
     double progress = (double)local_completed_tasks / total_tasks * 100;
-    fprintf(stderr, "Progress: %.2f%%\r", progress);
-    fflush(stderr); // Flush the output to ensure it is printed immediately
+    fprintf(stderr, "Progress: %.0f%%\r", progress);
+    fflush(stderr);
 }
 
 void enqueue(work_queue *queue, int fixed_coeff[NUM_FIXED_COEFF], int degree) {
@@ -92,7 +92,7 @@ void *compute_zeroes(void *thread_data) {
             if (GSL_REAL(poly[d]) > epsilon || GSL_REAL(poly[d]) < -epsilon ||
                 GSL_IMAG(poly[d]) > epsilon || GSL_IMAG(poly[d]) < -epsilon) {
                 double z[2*d];
-                int status = gsl_poly_complex_solve((double *)poly, d+1, w, z);
+                int status = gsl_poly_complex_solve_complex(poly, d + 1, w, z);
                 if (status == 0) {
                     for (int i = 0; i < d; i++) {
                         if (-epsilon < z[2*i+1] && z[2*i+1] < epsilon && (z[2*i] < -0.5 || z[2*i] > 0.5)) {
@@ -117,7 +117,7 @@ void *compute_zeroes(void *thread_data) {
         pthread_mutex_lock(&progress_mutex);
         completed_tasks++;
         pthread_mutex_unlock(&progress_mutex);
-        if (completed_tasks % 100 == 0) { // Adjust this value as needed to control frequency of progress updates
+        if (completed_tasks % 25 == 0) {
             print_progress();
         }
 

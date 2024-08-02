@@ -100,21 +100,21 @@ int read_input_file(const char *filename, input_params_t *params) {
     fclose(file);
 
     // Print parsed parameters for debugging
-    printf("Parsed parameters:\n");
-    printf("xmin = %f\n", params->xmin);
-    printf("xmax = %f\n", params->xmax);
-    printf("ymin = %f\n", params->ymin);
-    printf("ymax = %f\n", params->ymax);
-    printf("xres = %d\n", params->xres);
-    printf("coeffs = ");
+    fprintf(stderr, "Parsed parameters:\n");
+    fprintf(stderr, "xmin = %f\n", params->xmin);
+    fprintf(stderr, "xmax = %f\n", params->xmax);
+    fprintf(stderr, "ymin = %f\n", params->ymin);
+    fprintf(stderr, "ymax = %f\n", params->ymax);
+    fprintf(stderr, "xres = %d\n", params->xres);
+    fprintf(stderr, "coeffs = ");
     for (int i = 0; i < params->coeff_count; i++) {
-        printf("(%f,%f) ", GSL_REAL(params->coeffs[i]), GSL_IMAG(params->coeffs[i]));
+        fprintf(stderr, "(%f,%f) ", GSL_REAL(params->coeffs[i]), GSL_IMAG(params->coeffs[i]));
     }
-    printf("\ndegrees = ");
+    fprintf(stderr, "\ndegrees = ");
     for (int i = 0; i < params->degree_count; i++) {
-        printf("%d ", params->degrees[i]);
+        fprintf(stderr, "%d ", params->degrees[i]);
     }
-    printf("\n");
+    fprintf(stderr, "\n");
 
     return 0;
 }
