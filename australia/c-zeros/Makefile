@@ -24,7 +24,7 @@ $(TARGET): $(OBJS)
 
 # Clean up build artifacts
 clean:
-	rm -f $(TARGET) $(OBJS) output.tiff
+	rm -f $(TARGET) $(OBJS)
 
 # Phony targets
 .PHONY: all clean

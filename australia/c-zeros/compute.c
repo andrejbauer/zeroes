@@ -4,14 +4,10 @@
 #include <gsl/gsl_poly.h>
 #include <gsl/gsl_errno.h>
 #include <pthread.h>
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
 #include "compute.h"
 
-// Define the progress tracking variables
-unsigned int completed_tasks = 0;
-unsigned int total_tasks = 0;
-
+static unsigned int completed_tasks = 0;
+static unsigned int total_tasks = 0;
 pthread_mutex_t progress_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void print_progress() {
@@ -73,7 +69,7 @@ void *compute_zeroes(void *thread_data) {
         }
 
         int d = task->degree;
-        gsl_complex *poly = (gsl_complex *)calloc(d + 1, sizeof(gsl_complex));
+        double *poly = (double *)calloc(d + 1, sizeof(double));
         int *counter = (int *)calloc(d + 1, sizeof(int));
         int j;
 
@@ -89,10 +85,9 @@ void *compute_zeroes(void *thread_data) {
 
         gsl_poly_complex_workspace *w = gsl_poly_complex_workspace_alloc(d+1);
         do {
-            if (GSL_REAL(poly[d]) > epsilon || GSL_REAL(poly[d]) < -epsilon ||
-                GSL_IMAG(poly[d]) > epsilon || GSL_IMAG(poly[d]) < -epsilon) {
+            if (poly[d] > epsilon || poly[d] < -epsilon) {
                 double z[2*d];
-                int status = gsl_poly_complex_solve_complex(poly, d + 1, w, z);
+                int status = gsl_poly_complex_solve(poly, d+1, w, z);
                 if (status == 0) {
                     for (int i = 0; i < d; i++) {
                         if (-epsilon < z[2*i+1] && z[2*i+1] < epsilon && (z[2*i] < -0.5 || z[2*i] > 0.5)) {
@@ -117,7 +112,7 @@ void *compute_zeroes(void *thread_data) {
         pthread_mutex_lock(&progress_mutex);
         completed_tasks++;
         pthread_mutex_unlock(&progress_mutex);
-        if (completed_tasks % 25 == 0) {
+        if (completed_tasks % 20 == 0) { // Adjust this value as needed to control frequency of progress updates
             print_progress();
         }
 
