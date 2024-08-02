@@ -90,9 +90,6 @@ void *compute_zeroes(void *thread_data) {
                 int status = gsl_poly_complex_solve(poly, d+1, w, z);
                 if (status == 0) {
                     for (int i = 0; i < d; i++) {
-                        if (-epsilon < z[2*i+1] && z[2*i+1] < epsilon && (z[2*i] < -0.5 || z[2*i] > 0.5)) {
-                            continue;
-                        }
                         int x = (int)((data->xres * (z[2*i] - data->xmin)) / (data->xmax - data->xmin));
                         int y = data->yres - (int)((data->yres * (z[2*i+1] - data->ymin)) / (data->ymax - data->ymin));
                         if (0 <= x && x < data->xres && 0 <= y && y < data->yres) {
