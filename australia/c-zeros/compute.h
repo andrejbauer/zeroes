@@ -33,5 +33,6 @@ void enqueue(work_queue *queue, int fixed_coeff[NUM_FIXED_COEFF], int degree);
 work_item* dequeue(work_queue *queue);
 void recursive_enqueue(work_queue *queue, int *fixed_coeff, int depth, int ci_max, int degree);
 void *compute_zeroes(void *thread_data);
+void initialize_gsl(void);
 
 #endif // COMPUTE_H

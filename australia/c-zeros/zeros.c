@@ -121,6 +121,8 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
+    initialize_gsl();
+
     const char *input_file = argv[1];
     const char *output_file = argv[2];
 

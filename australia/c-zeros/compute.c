@@ -20,6 +20,16 @@ void print_progress() {
     fflush(stderr);
 }
 
+// Custom GSL error handler that ignores errors
+void gsl_error_handler(const char *reason, const char *file, int line, int gsl_errno) {
+    fprintf(stderr, "GSL error: %s:%d: %s (error code: %d)\n", file, line, reason, gsl_errno);
+    // Ignore the error and continue execution
+}
+
+void initialize_gsl() {
+    gsl_set_error_handler(&gsl_error_handler);
+}
+
 void enqueue(work_queue *queue, int fixed_coeff[NUM_FIXED_COEFF], int degree) {
     work_item *item = (work_item *)malloc(sizeof(work_item));
     for (int i = 0; i < NUM_FIXED_COEFF; i++) {
