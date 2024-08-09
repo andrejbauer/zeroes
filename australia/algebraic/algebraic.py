@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python3
 
 # Compute algebraic numbers in the complex plane and draw a nice picture
 
