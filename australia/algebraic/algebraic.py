@@ -152,7 +152,7 @@ class AlgebraicNumbers():
         tasks.append(polys)
         print("Generated {0} tasks (degree {1}, coefficient {2})".format(len(tasks), degree, max_coeff))
 
-        results_queue = queue.Queue()
+        results = queue.Queue()
         num_workers = os.cpu_count() - 1
 
         with ProcessPoolExecutor(max_workers=num_workers) as executor:
@@ -160,43 +160,23 @@ class AlgebraicNumbers():
 
             for future in as_completed(futures):
                 try:
-                    result = future.result()
-                    # Put the results and the associated polynomial into the queue
-                    results_queue.put(result)
+                    results.put(future.result())
+                    print(".", end='', flush=True)
                 except Exception as e:
                     print(f"Error computing roots: {e}")
 
         # Process the results serially after all computations are done
         j = 0
-        print("Registering the roots.")
-        while not results_queue.empty():
-            for (roots, poly) in results_queue.get():
+        print("\nRegistering the roots.")
+        while not results.empty():
+            result = results.get()
+            print('.', end='', flush=True)
+            for (roots, poly) in result:
                 for root in roots:
                     j += 1
                     self.register(root.real, root.imag, poly)
 
-        print("Degree completed with {0} roots".format(j))
-
-
-    # def compute(self, degree, max_coeff):
-    #     """Compute the algebraic numbers to be drawn."""
-    #     poly = list(range(0,degree+1))
-
-    #     def loop(k, coeff):
-    #         if k <= degree:
-    #             cmax = coeff - degree + k
-    #             cmin = (-cmax if k != 0 else 1)
-    #             for c in range(cmin, cmax+1):
-    #                 if k == 0: print ("Degree {0}: {1}/{2}".format(degree, c, coeff), end='\r')
-    #                 if k == degree and degree > 1 and c == 0: continue # constant term must be non-zero for non-linear polynomials
-    #                 poly[k] = c
-    #                 loop(k+1, coeff - abs(c))
-    #         else:
-    #             for root in numpy.roots(poly):
-    #                 self.register(root.real, root.imag, poly)
-
-    #     loop(0, max_coeff)
-    #     print()
+        print("\nDegree completed with {0} roots".format(j))
 
     def draw(self):
         """Draw all roots of polynomials whose sum of absolute values does not exceed
