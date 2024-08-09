@@ -213,7 +213,7 @@ class AlgebraicNumbers():
 
     def load_numbers(self, fh):
         """Load precomputed roots from a file"""
-        print ("Loading roots from {1}... ".format(fh.name), end='', flush=True)
+        print ("Loading roots from {0}... ".format(fh.name), end='', flush=True)
         roots = pickle.load(fh)
         print ("{0} roots... ".format(fh.name), end='', flush=True)
         for (real, imag, poly) in roots:
