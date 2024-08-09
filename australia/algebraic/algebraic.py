@@ -2,8 +2,11 @@
 
 # Compute algebraic numbers in the complex plane and draw a nice picture
 
+import queue
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import os
+
 import numpy
-import sys
 import argparse
 import math
 import cairo
@@ -39,6 +42,9 @@ def color_list(s):
        to [(255,127,0), (127,127,127), (0,0,255)]."""
     return (tuple(tuple(map(float,rgb.split(','))) for rgb in s.split(':')))
 
+def roots_of(polys):
+    """Compute roots of the given polynomials."""
+    return tuple((numpy.roots(p), p) for p in polys)
 
 ## Color function helper
 
@@ -115,25 +121,82 @@ class AlgebraicNumbers():
         if ((i,j) not in self.stars) or importance(poly) < importance(self.stars[(i,j)][2]):
             self.stars[(i,j)] = (real, imag, tuple(poly))
 
-    def compute(self, degree, max_coeff):
-        """Compute the algebraic numbers to be drawn."""
-        poly = list(range(0,degree+1))
+    def compute(self, degree, max_coeff, chunk=10000):
+        """Compute the algebraic numbers of a given degree and bound on sum of absolute values of coefficients."""
+        tasks = []
+        polys = [] # current task
+        poly = [0 for _i in range(degree+1)] # current poly
 
-        def loop(k, coeff):
+        def generate_tasks(k, coeff):
+            nonlocal polys
             if k <= degree:
-                cmax = coeff - degree + k
+                cmax = coeff
                 cmin = (-cmax if k != 0 else 1)
                 for c in range(cmin, cmax+1):
-                    if k == 0: print ("Degree {0}: {1}/{2}".format(degree, c, coeff), end='\r')
-                    if k == degree and degree > 1 and c == 0: continue # constant term must be non-zero for non-linear polynomials
+                    if k == degree and degree > 1 and c == 0:
+                        # constant term must be non-zero for non-linear polynomials
+                        continue
+                    if k == degree and degree == 1 and c == 0 and poly[0] != 1:
+                        # linear polynomial with zero constant term must have leading coefficient 1
+                        continue
                     poly[k] = c
-                    loop(k+1, coeff - abs(c))
+                    generate_tasks(k+1, coeff - abs(c))
             else:
-                for root in numpy.roots(poly):
+                polys.append(poly[:])
+                if len(polys) >= chunk:
+                    tasks.append(polys)
+                    polys = []
+
+        generate_tasks(0, max_coeff)
+        # enqueue the remainder
+        tasks.append(polys)
+        print("Generated {0} tasks (degree {1}, coefficient {2})".format(len(tasks), degree, max_coeff))
+
+        results_queue = queue.Queue()
+        num_workers = os.cpu_count() - 1
+
+        with ProcessPoolExecutor(max_workers=num_workers) as executor:
+            futures = [executor.submit(roots_of, t) for t in tasks]
+
+            for future in as_completed(futures):
+                try:
+                    result = future.result()
+                    # Put the results and the associated polynomial into the queue
+                    results_queue.put(result)
+                except Exception as e:
+                    print(f"Error computing roots: {e}")
+
+        # Process the results serially after all computations are done
+        j = 0
+        print("Registering the roots.")
+        while not results_queue.empty():
+            for (roots, poly) in results_queue.get():
+                for root in roots:
+                    j += 1
                     self.register(root.real, root.imag, poly)
 
-        loop(0, max_coeff)
-        print()
+        print("Degree completed with {0} roots".format(j))
+
+
+    # def compute(self, degree, max_coeff):
+    #     """Compute the algebraic numbers to be drawn."""
+    #     poly = list(range(0,degree+1))
+
+    #     def loop(k, coeff):
+    #         if k <= degree:
+    #             cmax = coeff - degree + k
+    #             cmin = (-cmax if k != 0 else 1)
+    #             for c in range(cmin, cmax+1):
+    #                 if k == 0: print ("Degree {0}: {1}/{2}".format(degree, c, coeff), end='\r')
+    #                 if k == degree and degree > 1 and c == 0: continue # constant term must be non-zero for non-linear polynomials
+    #                 poly[k] = c
+    #                 loop(k+1, coeff - abs(c))
+    #         else:
+    #             for root in numpy.roots(poly):
+    #                 self.register(root.real, root.imag, poly)
+
+    #     loop(0, max_coeff)
+    #     print()
 
     def draw(self):
         """Draw all roots of polynomials whose sum of absolute values does not exceed
@@ -185,7 +248,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = "Generate images of complex zeroes")
     parser.add_argument('--load', dest='load', action='append', type=argparse.FileType('rb'), help='file to load precomputed zeroes')
     parser.add_argument('--save', dest='save', type=argparse.FileType('xb'), help='file to save computed zeroes')
-    parser.add_argument('--draw', dest='draw', type=argparse.FileType('xb'), help='output file (PNG)')
+    parser.add_argument('--draw', dest='draw', type=argparse.FileType('wb'), help='output file (PNG)')
     parser.add_argument('--size', dest='size', default=1024, type=int, help='horizontal image size in pixels')
     parser.add_argument('--radius', dest='radius', default=0.5, type=float, help='maximum root radius')
     parser.add_argument('--decay', dest='decay', default=2.5, type=float, help='radius decay factor')
