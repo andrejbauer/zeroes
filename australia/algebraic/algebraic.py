@@ -212,11 +212,13 @@ class AlgebraicNumbers():
             pickle.dump(self.roots, fh)
 
     def load_numbers(self, fh):
-        """Load precomputed roots from a file."""
+        """Load precomputed roots from a file"""
+        print ("Loading roots from {1}... ".format(fh.name), end='', flush=True)
         roots = pickle.load(fh)
-        print ("Loading {0} roots from {1}".format(len(roots), fh.name))
+        print ("{0} roots... ".format(fh.name), end='', flush=True)
         for (real, imag, poly) in roots:
             self.register(real, imag, poly)
+        print ("registered.")
 
     def save_image(self, outfile):
         """Save image to the given output file in PNG format."""
@@ -241,12 +243,13 @@ if __name__ == '__main__':
     parser.add_argument('--colors', dest='colors', default=((1,1,0),(1,0.5,0),(1,0,0.5),(0,0,1)), type=color_list, help='list of colors')
     args = parser.parse_args()
     if not (args.save or args.draw):
-        print ("It makes no sense to use neither --save nor --draw")
+        print ("Neither --save nor --draw given, nothing to do.")
         exit(1)
     nums = AlgebraicNumbers(xmin=args.xmin, xmax=args.xmax, ymin=args.ymin, ymax=args.ymax,
                             xres=args.size, radius=args.radius, decay=args.decay, save=(bool(args.save)),
                             colors=args.colors)
     if args.load:
+        print ("Loading numbers ...")
         for fh in args.load:
             nums.load_numbers(fh)
     else:
