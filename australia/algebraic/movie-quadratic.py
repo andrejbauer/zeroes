@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 from __future__ import division
 import math
 import sys
@@ -133,10 +133,10 @@ flyover2 = Flyover(
 # Fly into (0,1)
 flyover2.linear(x0=0.0,y0=0.0,
              x1=0.0,y1=1.0,
-             scale0=0.3,
+             scale0=9.0/16.0,
              scale1=0,
-             time=5,
-             out='zoom')
+             time=10,
+             out='quadratic-1')
 
 # Fly into (0,1) to (0.25,0.25)
 flyover2.linear(x0=0.0,y0=1.0,
@@ -144,7 +144,7 @@ flyover2.linear(x0=0.0,y0=1.0,
              scale0=0,
              scale1=0,
              time=10,
-             out='zoom-2')
+             out='quadratic-2')
 
 flyover3 = Flyover(
     orig = "cubic.png",
@@ -159,10 +159,10 @@ flyover3 = Flyover(
 # Fly into (0.5, 0.5)
 flyover3.linear(x0=0.0,y0=0.0,
              x1=0.25,y1=0.75,
-             scale0=0.3,
+             scale0=9.0/16.0,
              scale1=0,
-             time=5,
-             out='zoom-3')
+             time=10,
+             out='cubic-1')
 
 flyoverAll = Flyover(
     orig = "algebraic-numbers.png",
@@ -174,13 +174,25 @@ flyoverAll = Flyover(
     xres_movie = 1920, # Full HD
     yres_movie = 1080)
 
-# Fly into (0.5, 0.5)
+# Fly into (0,1)
 flyoverAll.linear(x0=0.0,y0=0.0,
-             x1=0.25,y1=0.75,
+             x1=0.0,y1=1.0,
              scale0=9.0/16.0,
              scale1=0,
              time=10,
-             out='zoom-algebraic')
+             out='zoom-algebraic-1')
+
+# Arc from (0,1) to (1,0)
+flyoverAll.arc(
+            phi0=math.pi/2,
+            r0=1.0,
+            phi1=0.0,
+            r1=1.0,
+             scale0=0,
+             scale1=0,
+             time=10,
+             out='zoom-algebraic-2')
+
 
 
 # To use the program, we give it one of the above out parameters
@@ -193,4 +205,4 @@ flyoverAll.linear(x0=0.0,y0=0.0,
 #    python movie.py fringe
 #
 # change to flyover2 for the quadratic one (I know, it's silly)
-flyoverAll.magick(sys.argv[1])
+flyover3.magick(sys.argv[1])
