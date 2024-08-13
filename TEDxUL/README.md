@@ -1,5 +1,7 @@
 # Zeroes of polynomials
 
+**Note:** This is an older version of the programs that was used in 2014. It is superseded by the [`australia`](../australia) code. It is unlikely that it will work out of the box.
+
 Here is the code used to create the images from my [TEDx
 talk](http://tedxul.si/speakers/andrej-bauer/) (here is the [video](https://youtu.be/XtaRkV7PWTA?si=9NPvH8EkOiftXmes) with English subtitles), with extras. It is all released under
 the permissive [MIT license](http://opensource.org/licenses/MIT), so please have fun with
@@ -78,7 +80,7 @@ ImageMagick is a wonderful tool for doing precisely that. For instance, given th
 `picture.ppm` as computed above, we can run
 
     convert -normalize -fill orange -tint 100 picture.ppm picture.png
-    
+
 to produce a better looking version `picture.png`. For larger images you may need to
 replace `-normalize` with a suitable invocatin of `-contrast-stretch`, and for really good
 quality you will need some competence with ImageMagick.
