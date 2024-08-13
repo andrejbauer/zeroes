@@ -184,6 +184,7 @@ class AlgebraicNumbers():
         i = 0
         m = len(self.stars)
         colors = compute_colors(self.degree_max - self.degree_min + 1, self.colors)
+        print ("Using colors: {0}".format(colors))
         # Create image and canvas
         self.image = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.xres, self.yres)
         ctx = cairo.Context(self.image)
