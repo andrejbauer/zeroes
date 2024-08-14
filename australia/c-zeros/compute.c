@@ -16,7 +16,7 @@ void print_progress() {
     pthread_mutex_unlock(&progress_mutex);
 
     double progress = (double)local_completed_tasks / total_tasks * 100;
-    fprintf(stderr, "Progress: %.0f%%\r", progress);
+    fprintf(stderr, "Progress: %.02f%%\r", progress);
     fflush(stderr);
 }
 

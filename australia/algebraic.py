@@ -236,7 +236,7 @@ if __name__ == '__main__':
     parser.add_argument('--radius', dest='radius', default=0.5, type=float, help='maximum root radius')
     parser.add_argument('--decay', dest='decay', default=2.5, type=float, help='radius decay factor')
     parser.add_argument('--degrees', dest='degrees', default=[], type=degree_list, help='degrees to compute')
-    parser.add_argument('--coeff', dest='coeff', default=10, type=int, help='bound on sum of coefficients')
+    parser.add_argument('--coeff', dest='coeff', default=10, type=int, help='bound on sum of absolute values of coefficients')
     parser.add_argument('--xmin', dest='xmin', default=-2.0, type=float, help='minimum real component')
     parser.add_argument('--xmax', dest='xmax', default= 2.0, type=float, help='maximum real component')
     parser.add_argument('--ymin', dest='ymin', default=-2.0, type=float, help='minimum imaginary component')

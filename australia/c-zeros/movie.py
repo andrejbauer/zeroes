@@ -1,7 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+
+# This program can be used to generate movies that zoom into a feature of an image.
+
 from __future__ import division
 import math
 import sys
+import os
 import subprocess
 
 def interpolate(a, x, y):
@@ -94,6 +98,12 @@ class Flyover():
     def magick(self, out):
         """Generate ImageMagick cropping commands, feed them into ImageMagic and run ffmpeg
            to generate the movie. The out parameter is one of the folders."""
+        # Make the directory
+        if os.path.exists(out):
+            print("The output folder {0} already exists, please get rid of it.".format(out))
+            exit(1)
+        print("Creating folder {0} for storing images (you can delete it afterwards)".format(out))
+        os.makedirs(out)
         lst = self.path[out]
         convert = subprocess.Popen(['convert','-verbose', '@-'],
                                    stdin=subprocess.PIPE, stdout=0, stderr=0, text=True)
@@ -113,21 +123,19 @@ class Flyover():
                                   '{0}.mov'.format(out)],
                                   stdin=1, stdout=0, stderr=0)
         ffmpeg.wait()
-        print ("FINISHED")
+        print ("Generated {0}.mov, you may delete the folder {0} now".format(out))
 
 #### Main program
 
-# We define the flyover object. This one is for the official 20000x17500 image.
-# If you are going to make your own movie, I recommend that you first make a
-# scaled down version of the image and experiment with it first.
+# We define the flyover object.
 flyover = Flyover(
-    orig = "zeros-31-orange.png",
+    orig = "big-picture.png", # the original large picture
     xmin = -2.0,
     xmax = 2.0,
     ymin = -2.0,
     ymax = 2.0,
-    xres_orig = 16384,
-    xres_movie = 1920, # Full HD
+    xres_orig = 16384, # original input resolution
+    xres_movie = 1920, # Full HD output
     yres_movie = 1080)
 
 # Fly into (0,1)
@@ -135,7 +143,7 @@ flyover.linear(x0=0,y0=0,
              x1=0,y1=1,
              scale0=1,
              scale1=0,
-             time=8,
+             time=5,
              out='zoom')
 
 # From (0,1) to (1/sqrt(2), 1/sqrt(2))
