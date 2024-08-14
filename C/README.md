@@ -1,3 +1,5 @@
+# Visualization of zeros of polynomals
+
 This folder contains the C program for calculating zeros in parallel.
 
 ## Compilation

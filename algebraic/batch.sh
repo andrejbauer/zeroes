@@ -6,8 +6,9 @@
 opts="--xmin -2 --xmax 2 --ymin -2 --ymax 2 --size 16384"
 pic="algebraic-numbers.png"
 
-# These will fail if the output files already exist, so it is safe to
-# return the batch, it won't destroy any existing data
+# These will fail if the output files already exist, and the script will
+# proceed to generation of the image below. Thus it is safe to
+# re-run the batch script, as it won't over-write previously computed files.
 
 ./algebraic.py $opts --save roots-1-100.dat --coeff 100 --degrees 1
 ./algebraic.py $opts --save roots-2-100.dat --coeff 100 --degrees 2
@@ -22,7 +23,7 @@ pic="algebraic-numbers.png"
 # Do not clobber a previously generated picture -- it was a lot of work
 if [ -f "$pic" ] ; then mv "$pic" "backup"-`date +%s`-$pic; fi
 
-# Generate the image
+# Generate the image from previously computed zeros
 ./algebraic.py $opts \
  --colors 1,1,0:1,0,0:1,0.5,0:1,0,1:0,0,0.5 \
  --decay 2.9 \

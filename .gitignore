@@ -1,6 +1,5 @@
 *.ppm
 *.png
-zeroes
 *.pyc
 *.mov
 *.mp4
@@ -8,3 +7,5 @@ zeroes
 *.tiff
 *.dat
 *.zip
+C/zeros
+*.o
